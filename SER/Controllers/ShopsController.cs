@@ -1,133 +1,155 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SER.DataAccess;
-using SER.Models;
+using SER.Domain;
+using SER.Domain.Entities;
+using SER.ViewModel;
 
 namespace SER.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ShopsController : ControllerBase
+    public class ShopController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISeedService _seedService;
 
-        public ShopsController(ApplicationDbContext context)
+        public ShopController(ISeedService seedService)
         {
-            _context = context;
+            _seedService = seedService;
         }
 
-        // GET: api/Shops
+        // GET: api/Shop
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shop>>> GetShops()
+        public async Task<ActionResult<IEnumerable<Shop>>> GetShop()
         {
-            if (_context.Shops == null)
-            {
-                return NotFound();
-            }
-            return await _context.Shops.OrderByDescending(e => e.Location).ToListAsync();
-        }
-        // GET: api/Products
-        [Route("[action]")]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shop>>> GetShopsPaged(int PageIndex = 1, int PageSize = 3)
-        {
-            if (_context.Products == null)
-            {
-                return NotFound();
-            }
-            //sắp xếp theo Location giảm dần
-            if (PageIndex > 0 && PageSize > 0)
-                return await _context.Shops.Skip(PageSize * (PageIndex - 1)).OrderByDescending(e => e.Location).ToListAsync();
-            else
-                return await _context.Shops.OrderByDescending(e => e.Location).ToListAsync();
-        }
-        // GET: api/Shops/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Shop>> GetShop(Guid id)
-        {
-            if (_context.Shops == null)
-            {
-                return NotFound();
-            }
-            var shop = await _context.Shops.FindAsync(id);
-
-            if (shop == null)
-            {
-                return NotFound();
-            }
-
-            return shop;
-        }
-
-        // PUT: api/Shops/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutShop(Guid id, Shop shop)
-        {
-            if (id != shop.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(shop).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ShopExists(id))
+                if (_seedService.Shop == null)
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                return Ok(_seedService.Shop.GetAll());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
             }
 
-            return NoContent();
+        }
+        // GET: api/Shop
+        [Route("[action]")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Shop>>> GetShopPaged(int pageIndex = 1, int pageSize = 30)
+        {
+
+            try
+            {
+                if (_seedService.Shop == null)
+                {
+                    return NotFound();
+                }
+                //sắp xếp theo Email tăng dần
+                return Ok(new ResultApi(_seedService.Shop.GetPaged(pageIndex, pageSize)));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
+        }
+        // GET: api/Shop/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Shop>> GetShop(Guid id)
+        {
+
+            try
+            {
+                if (_seedService.Shop == null)
+                {
+                    return NotFound();
+                }
+                var Shop = _seedService.Shop.GetEntity(id);
+
+                if (Shop == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(new ResultApi(Shop));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
         }
 
-        // POST: api/Shops
+        // PUT: api/Shop/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutShop(Shop Shop)
+        {
+            try
+            {
+                if (_seedService.Shop == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                }
+                var data = _seedService.Shop.UpdateEntity(Shop);
+                if (data == null)
+                    return NoContent();
+                return Ok(new ResultApi(data));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+
+            }
+
+        }
+
+        // POST: api/Shop
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Shop>> PostShop(Shop shop)
+        public async Task<ActionResult<Shop>> PostShop(Shop Shop)
         {
-            if (_context.Shops == null)
+            try
             {
-                return Problem("Entity set 'ApplicationDbContext.Shops'  is null.");
+                if (_seedService.Shop == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                }
+                var data = _seedService.Shop.CreateEntity(Shop);
+                if (data == null)
+                    return NoContent();
+                return Ok(new ResultApi(data));
             }
-            _context.Shops.Add(shop);
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
 
-            return CreatedAtAction("GetShop", new { id = shop.Id }, shop);
         }
 
-        // DELETE: api/Shops/5
+        // DELETE: api/Shop/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteShop(Guid id)
         {
-            if (_context.Shops == null)
+            try
             {
-                return NotFound();
+                if (_seedService.Shop == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                }
+                var data = _seedService.Shop.GetEntity(id);
+                if (data == null)
+                    return NoContent();
+                _seedService.Shop.DeleteEntity(data);
+                return Ok(new ResultApi(data));
             }
-            var shop = await _context.Shops.FindAsync(id);
-            if (shop == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new ResultApi(ex.Message));
+
             }
 
-            _context.Shops.Remove(shop);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool ShopExists(Guid id)
-        {
-            return (_context.Shops?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SER.Models;
+namespace SER.Domain.Entities;
 
 public class Product
 {

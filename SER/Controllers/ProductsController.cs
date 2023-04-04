@@ -1,134 +1,155 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SER.DataAccess;
-using SER.Models;
+using SER.Domain;
+using SER.Domain.Entities;
+using SER.ViewModel;
 
 namespace SER.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public class ProductController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISeedService _seedService;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductController(ISeedService seedService)
         {
-            _context = context;
+            _seedService = seedService;
         }
 
-        // GET: api/Products
+        // GET: api/Product
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts(int PageIndex = 0, int PageSize = 0)
+        public async Task<ActionResult<IEnumerable<Product>>> GetProduct()
         {
-            if (_context.Products == null)
-            {
-                return NotFound();
-            }
-            return await _context.Products.OrderByDescending(e => e.Price).ToListAsync();
-        }
-        // GET: api/Products
-        [Route("[action]")]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductsPaged(int PageIndex = 1, int PageSize = 30)
-        {
-            if (_context.Products == null)
-            {
-                return NotFound();
-            }
-            //sắp xếp theo Price giảm dần
-            if (PageIndex > 0 && PageSize > 0)
-                return await _context.Products.Skip(PageSize * (PageIndex - 1)).OrderByDescending(e => e.Price).ToListAsync();
-            else
-                return await _context.Products.OrderByDescending(e => e.Price).ToListAsync();
-        }
-
-        // GET: api/Products/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(Guid id)
-        {
-            if (_context.Products == null)
-            {
-                return NotFound();
-            }
-            var product = await _context.Products.FindAsync(id);
-
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            return product;
-        }
-
-        // PUT: api/Products/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(Guid id, Product product)
-        {
-            if (id != product.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(product).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
+                if (_seedService.Product == null)
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                return Ok(_seedService.Product.GetAll());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
             }
 
-            return NoContent();
+        }
+        // GET: api/Product
+        [Route("[action]")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductPaged(int pageIndex = 1, int pageSize = 30)
+        {
+
+            try
+            {
+                if (_seedService.Product == null)
+                {
+                    return NotFound();
+                }
+                //sắp xếp theo Email tăng dần
+                return Ok(new ResultApi(_seedService.Product.GetPaged(pageIndex, pageSize)));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
+        }
+        // GET: api/Product/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Product>> GetProduct(Guid id)
+        {
+
+            try
+            {
+                if (_seedService.Product == null)
+                {
+                    return NotFound();
+                }
+                var Product = _seedService.Product.GetEntity(id);
+
+                if (Product == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(new ResultApi(Product));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
         }
 
-        // POST: api/Products
+        // PUT: api/Product/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutProduct(Product Product)
+        {
+            try
+            {
+                if (_seedService.Product == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                }
+                var data = _seedService.Product.UpdateEntity(Product);
+                if (data == null)
+                    return NoContent();
+                return Ok(new ResultApi(data));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+
+            }
+
+        }
+
+        // POST: api/Product
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<Product>> PostProduct(Product Product)
         {
-            if (_context.Products == null)
+            try
             {
-                return Problem("Entity set 'ApplicationDbContext.Products'  is null.");
+                if (_seedService.Product == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                }
+                var data = _seedService.Product.CreateEntity(Product);
+                if (data == null)
+                    return NoContent();
+                return Ok(new ResultApi(data));
             }
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                return BadRequest(new ResultApi(ex.Message));
+            }
 
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
-        // DELETE: api/Products/5
+        // DELETE: api/Product/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
-            if (_context.Products == null)
+            try
             {
-                return NotFound();
+                if (_seedService.Product == null)
+                {
+                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                }
+                var data = _seedService.Product.GetEntity(id);
+                if (data == null)
+                    return NoContent();
+                _seedService.Product.DeleteEntity(data);
+                return Ok(new ResultApi(data));
             }
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(new ResultApi(ex.Message));
+
             }
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool ProductExists(Guid id)
-        {
-            return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
     }
 }

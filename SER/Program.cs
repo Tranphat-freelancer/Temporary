@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SER.DataAccess;
-using SER.Models;
+using SER.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +14,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("FirstConnection"));
 });
+
+
+builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
+builder.Services.AddScoped(typeof(ISeedService), typeof(SeedService));
 var app = builder.Build();
-var a = new Customer();
 
 
 // Configure the HTTP request pipeline.

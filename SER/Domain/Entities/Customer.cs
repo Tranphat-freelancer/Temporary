@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SER.Models;
+namespace SER.Domain.Entities;
 
 public class Customer
 {

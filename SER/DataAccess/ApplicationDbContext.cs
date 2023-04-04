@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SER.Models;
+using SER.Domain.Entities;
 
 namespace SER.DataAccess;
 
 public class ApplicationDbContext : DbContext
 {
     private readonly IConfiguration _configuration;
-    public ApplicationDbContext(DbContextOptions options, IConfiguration configuration) : base(options)
+    public ApplicationDbContext(IConfiguration configuration)
     {
         _configuration = configuration;
     }
