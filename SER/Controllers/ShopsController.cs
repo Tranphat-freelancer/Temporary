@@ -24,7 +24,7 @@ namespace SER.Controllers
             {
                 return NotFound();
             }
-            return await _context.Shops.ToListAsync();
+            return await _context.Shops.OrderByDescending(e => e.Location).ToListAsync();
         }
         // GET: api/Products
         [Route("[action]")]

@@ -24,7 +24,7 @@ namespace SER.Controllers
             {
                 return NotFound();
             }
-            return await _context.Customers.ToListAsync();
+            return await _context.Customers.OrderBy(e => e.Email).ToListAsync();
         }
         // GET: api/Customers
         [Route("[action]")]
