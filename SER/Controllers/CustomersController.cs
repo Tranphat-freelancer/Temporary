@@ -82,7 +82,8 @@ namespace SER.Controllers
 
         // PUT: api/Customer/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPost]
+        [Route("[action]")]
         public async Task<IActionResult> PutCustomer(Customer customer)
         {
             try
@@ -137,10 +138,10 @@ namespace SER.Controllers
                 {
                     return Problem("Entity set 'ApplicationDbContext.Customer'  is null.");
                 }
-                var data = _seedService.Customer.GetEntity(id);
+                var data = _seedService.Customer.DeleteEntity(id);
                 if (data == null)
                     return NoContent();
-                _seedService.Customer.DeleteEntity(data);
+
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)

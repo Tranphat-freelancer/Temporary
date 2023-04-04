@@ -94,7 +94,7 @@ public class ShopService : IShopService
             //mapper nếu dùng auto mapper
             //...
             if (pageIndex > 0 && pageSize > 0)
-                return _unitOfWork.Shop.GetQuery(orderBy: e => e.OrderByDescending(s => s.Location)).Skip(pageSize* (pageIndex - 1)).Take(pageSize).ToList();
+                return _unitOfWork.Shop.GetQuery(orderBy: e => e.OrderByDescending(s => s.Location)).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList();
             else
                 return _unitOfWork.Shop.GetList(orderBy: e => e.OrderByDescending(s => s.Location)); ;
         }
@@ -111,8 +111,9 @@ public class ShopService : IShopService
         {
             var entity = _unitOfWork.Shop.GetByID(request.Id);
             if (entity == null) return entity;
-
-            _unitOfWork.Shop.Update(request);
+            entity.Name = request.Name;
+            entity.Location = request.Location;
+            _unitOfWork.Shop.Update(entity);
             _unitOfWork.Commit();
 
             return entity;

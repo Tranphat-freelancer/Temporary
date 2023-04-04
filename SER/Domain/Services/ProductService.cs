@@ -94,7 +94,7 @@ public class ProductService : IProductService
             //mapper nếu dùng auto mapper
             //...
             if (pageIndex > 0 && pageSize > 0)
-                return _unitOfWork.Product.GetQuery(orderBy: e => e.OrderByDescending(s => s.Price)).Skip(pageSize* (pageIndex - 1)).Take(pageSize).ToList();
+                return _unitOfWork.Product.GetQuery(orderBy: e => e.OrderByDescending(s => s.Price)).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList();
             else
                 return _unitOfWork.Product.GetList(orderBy: e => e.OrderByDescending(s => s.Price)); ;
         }
@@ -111,8 +111,9 @@ public class ProductService : IProductService
         {
             var entity = _unitOfWork.Product.GetByID(request.Id);
             if (entity == null) return entity;
-
-            _unitOfWork.Product.Update(request);
+            entity.Price = request.Price;
+            entity.Name = request.Name;
+            _unitOfWork.Product.Update(entity);
             _unitOfWork.Commit();
 
             return entity;

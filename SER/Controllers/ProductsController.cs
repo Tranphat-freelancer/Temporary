@@ -82,7 +82,7 @@ namespace SER.Controllers
 
         // PUT: api/Product/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPost][Route("[action]")]
         public async Task<IActionResult> PutProduct(Product Product)
         {
             try
@@ -137,10 +137,10 @@ namespace SER.Controllers
                 {
                     return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
                 }
-                var data = _seedService.Product.GetEntity(id);
+                var data = _seedService.Product.DeleteEntity(id);
                 if (data == null)
                     return NoContent();
-                _seedService.Product.DeleteEntity(data);
+
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)

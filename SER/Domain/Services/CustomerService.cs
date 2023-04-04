@@ -111,8 +111,10 @@ public class CustomerService : ICustomerService
         {
             var entity = _unitOfWork.Customer.GetByID(request.Id);
             if (entity == null) return entity;
-
-            _unitOfWork.Customer.Update(request);
+            entity.DOB = request.DOB;
+            entity.FullName = request.FullName;
+            entity.Email = request.Email;
+            _unitOfWork.Customer.Update(entity);
             _unitOfWork.Commit();
 
             return entity;
