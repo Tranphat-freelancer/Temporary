@@ -8,7 +8,7 @@ using SER.DataAccess;
 
 #nullable disable
 
-namespace SER.Migrations
+namespace SER.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot

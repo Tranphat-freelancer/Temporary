@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace SER.Migrations
+namespace SER.Infrastructure.Migrations
 {
     public partial class UpdateModels1 : Migration
     {
