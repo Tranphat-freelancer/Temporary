@@ -1,4 +1,6 @@
-﻿using SER.Domain.Entities;
+﻿using AutoMapper;
+using SER.Domain.Entities;
+using SER.ViewModel.Shop.Requests;
 
 namespace SER.Domain.Services;
 
@@ -7,30 +9,33 @@ public interface IShopService
     object? GetAll();
     object? GetPaged(int pageIndex, int pageSize);
     object? GetEntity(object id);
-    object? CreateEntity(Shop request);
-    object? UpdateEntity(Shop request);
+    object? CreateEntity(ShopCreateRequest request);
+    object? UpdateEntity(ShopUpdateRequest request);
     object? DeleteEntity(object id);
 }
 public class ShopService : IShopService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger _logger;
-    public ShopService(IUnitOfWork unitOfWork, ILogger logger)
+    private readonly IMapper _mapper;
+
+    public ShopService(IUnitOfWork unitOfWork, ILogger logger, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _mapper = mapper;
     }
 
-    public object? CreateEntity(Shop request)
+    public object? CreateEntity(ShopCreateRequest request)
     {
         try
         {
-            //mapper nếu dùng auto mapper
-            //...
-            _unitOfWork.Shop.Insert(request);
+            var entity = _mapper.Map<Shop>(request);
+
+            _unitOfWork.Shop.Insert(entity);
             _unitOfWork.Commit();
 
-            return request;
+            return entity;
         }
         catch (Exception ex)
         {
@@ -91,12 +96,20 @@ public class ShopService : IShopService
     {
         try
         {
-            //mapper nếu dùng auto mapper
-            //...
+            var qShop = _unitOfWork.Shop.GetQuery(orderBy: e => e.OrderByDescending(s => s.Location));
+            var totalRow = qShop.Count();
             if (pageIndex > 0 && pageSize > 0)
-                return _unitOfWork.Shop.GetQuery(orderBy: e => e.OrderByDescending(s => s.Location)).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList();
+                return new
+                {
+                    Data = qShop.Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList(),
+                    totalRow
+                };
             else
-                return _unitOfWork.Shop.GetList(orderBy: e => e.OrderByDescending(s => s.Location)); ;
+                return new
+                {
+                    Data = qShop.ToList(),
+                    totalRow
+                };
         }
         catch (Exception ex)
         {
@@ -105,14 +118,15 @@ public class ShopService : IShopService
         }
     }
 
-    public object? UpdateEntity(Shop request)
+    public object? UpdateEntity(ShopUpdateRequest request)
     {
         try
         {
             var entity = _unitOfWork.Shop.GetByID(request.Id);
             if (entity == null) return entity;
-            entity.Name = request.Name;
-            entity.Location = request.Location;
+
+            _mapper.Map(request, entity);
+
             _unitOfWork.Shop.Update(entity);
             _unitOfWork.Commit();
 

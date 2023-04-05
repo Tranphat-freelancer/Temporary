@@ -21,6 +21,20 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Shop>()
+            .HasMany(s => s.Products)
+            .WithOne(p => p.Shop)
+            .HasForeignKey(p => p.ShopId);
+
+        modelBuilder.Entity<Customer>()
+            .HasMany(c => c.Products)
+            .WithMany(p => p.Customers)
+            .UsingEntity(j => j.ToTable("CustomerProduct"));
+
+        modelBuilder.Entity<Customer>()
+            .HasMany(c => c.Shops)
+            .WithMany(s => s.Customers)
+            .UsingEntity(j => j.ToTable("CustomerShop"));
     }
     //entities
     public DbSet<Customer> Customers { get; set; }

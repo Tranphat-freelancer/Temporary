@@ -2,6 +2,7 @@
 using SER.Domain;
 using SER.Domain.Entities;
 using SER.ViewModel;
+using SER.ViewModel.Customer.Requests;
 
 namespace SER.Controllers
 {
@@ -18,15 +19,16 @@ namespace SER.Controllers
 
         // GET: api/Customer
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomer()
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetAll()
         {
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
-                return Ok(_seedService.Customer.GetAll());
+                return Ok(new ResultApi(_seedService.Customer.GetAll()));
             }
             catch (Exception ex)
             {
@@ -35,19 +37,24 @@ namespace SER.Controllers
 
         }
         // GET: api/Customer
-        [Route("[action]")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomerPaged(int pageIndex = 1, int pageSize = 30)
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetPaged(int pageIndex = 1, int pageSize = 30)
         {
 
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
+                }
+                var data = _seedService.Customer.GetPaged(pageIndex, pageSize);
+                if (data == null)
+                {
+                    return NotFound(new ResultApi(data));
                 }
                 //sắp xếp theo Email tăng dần
-                return Ok(new ResultApi(_seedService.Customer.GetPaged(pageIndex, pageSize)));
+                return Ok(new ResultApi(data));
             }
             catch (Exception ex)
             {
@@ -55,21 +62,22 @@ namespace SER.Controllers
             }
         }
         // GET: api/Customer/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Customer>> GetCustomer(Guid id)
+        [Route("[action]")]
+        [HttpGet]
+        public async Task<ActionResult<Customer>> GetById(Guid id)
         {
 
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
                 var customer = _seedService.Customer.GetEntity(id);
 
                 if (customer == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi(customer));
                 }
 
                 return Ok(new ResultApi(customer));
@@ -84,17 +92,19 @@ namespace SER.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [Route("[action]")]
-        public async Task<IActionResult> PutCustomer(Customer customer)
+        public async Task<IActionResult> Update(CustomerUpdateRequest request)
         {
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Customer'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Customer.UpdateEntity(customer);
+                var data = _seedService.Customer.UpdateEntity(request);
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -108,17 +118,16 @@ namespace SER.Controllers
         // POST: api/Customer
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Customer>> PostCustomer(Customer customer)
+        [Route("[action]")]
+        public async Task<ActionResult<Customer>> Create(CustomerCreateRequest request)
         {
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Customer'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Customer.CreateEntity(customer);
-                if (data == null)
-                    return NoContent();
+                var data = _seedService.Customer.CreateEntity(request);
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -129,18 +138,22 @@ namespace SER.Controllers
         }
 
         // DELETE: api/Customer/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomer(Guid id)
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> HardDelete(Guid id)
         {
             try
             {
                 if (_seedService.Customer == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Customer'  is null.");
+                    return NotFound(new ResultApi());
                 }
                 var data = _seedService.Customer.DeleteEntity(id);
+
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
 
                 return Ok(new ResultApi(data));
             }

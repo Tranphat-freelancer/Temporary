@@ -2,6 +2,7 @@
 using SER.Domain;
 using SER.Domain.Entities;
 using SER.ViewModel;
+using SER.ViewModel.Shop.Requests;
 
 namespace SER.Controllers
 {
@@ -18,15 +19,16 @@ namespace SER.Controllers
 
         // GET: api/Shop
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shop>>> GetShop()
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Shop>>> GetAll()
         {
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
-                return Ok(_seedService.Shop.GetAll());
+                return Ok(new ResultApi(_seedService.Shop.GetAll()));
             }
             catch (Exception ex)
             {
@@ -35,19 +37,24 @@ namespace SER.Controllers
 
         }
         // GET: api/Shop
-        [Route("[action]")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shop>>> GetShopPaged(int pageIndex = 1, int pageSize = 30)
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Shop>>> GetPaged(int pageIndex = 1, int pageSize = 3)
         {
 
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
+                }
+                var data = _seedService.Shop.GetPaged(pageIndex, pageSize);
+                if (data == null)
+                {
+                    return NotFound(new ResultApi(data));
                 }
                 //sắp xếp theo Email tăng dần
-                return Ok(new ResultApi(_seedService.Shop.GetPaged(pageIndex, pageSize)));
+                return Ok(new ResultApi(data));
             }
             catch (Exception ex)
             {
@@ -55,21 +62,22 @@ namespace SER.Controllers
             }
         }
         // GET: api/Shop/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Shop>> GetShop(Guid id)
+        [Route("[action]")]
+        [HttpGet]
+        public async Task<ActionResult<Shop>> GetById(Guid id)
         {
 
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
                 var Shop = _seedService.Shop.GetEntity(id);
 
                 if (Shop == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi(Shop));
                 }
 
                 return Ok(new ResultApi(Shop));
@@ -82,18 +90,21 @@ namespace SER.Controllers
 
         // PUT: api/Shop/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost][Route("[action]")]
-        public async Task<IActionResult> PutShop(Shop Shop)
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> Update(ShopUpdateRequest request)
         {
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Shop.UpdateEntity(Shop);
+                var data = _seedService.Shop.UpdateEntity(request);
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -107,17 +118,16 @@ namespace SER.Controllers
         // POST: api/Shop
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Shop>> PostShop(Shop Shop)
+        [Route("[action]")]
+        public async Task<ActionResult<Shop>> Create(ShopCreateRequest request)
         {
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Shop.CreateEntity(Shop);
-                if (data == null)
-                    return NoContent();
+                var data = _seedService.Shop.CreateEntity(request);
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -128,18 +138,22 @@ namespace SER.Controllers
         }
 
         // DELETE: api/Shop/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteShop(Guid id)
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> HardDelete(Guid id)
         {
             try
             {
                 if (_seedService.Shop == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Shop'  is null.");
+                    return NotFound(new ResultApi());
                 }
                 var data = _seedService.Shop.DeleteEntity(id);
+
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
 
                 return Ok(new ResultApi(data));
             }

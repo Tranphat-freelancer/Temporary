@@ -2,6 +2,7 @@
 using SER.Domain;
 using SER.Domain.Entities;
 using SER.ViewModel;
+using SER.ViewModel.Product.Requests;
 
 namespace SER.Controllers
 {
@@ -18,15 +19,16 @@ namespace SER.Controllers
 
         // GET: api/Product
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProduct()
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAll()
         {
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
-                return Ok(_seedService.Product.GetAll());
+                return Ok(new ResultApi(_seedService.Product.GetAll()));
             }
             catch (Exception ex)
             {
@@ -35,19 +37,24 @@ namespace SER.Controllers
 
         }
         // GET: api/Product
-        [Route("[action]")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductPaged(int pageIndex = 1, int pageSize = 30)
+        [Route("[action]")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetPaged(int pageIndex = 1, int pageSize = 30)
         {
 
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
+                }
+                var data = _seedService.Product.GetPaged(pageIndex, pageSize);
+                if (data == null)
+                {
+                    return NotFound(new ResultApi(data));
                 }
                 //sắp xếp theo Email tăng dần
-                return Ok(new ResultApi(_seedService.Product.GetPaged(pageIndex, pageSize)));
+                return Ok(new ResultApi(data));
             }
             catch (Exception ex)
             {
@@ -55,21 +62,22 @@ namespace SER.Controllers
             }
         }
         // GET: api/Product/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(Guid id)
+        [Route("[action]")]
+        [HttpGet]
+        public async Task<ActionResult<Product>> GetById(Guid id)
         {
 
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi());
                 }
                 var Product = _seedService.Product.GetEntity(id);
 
                 if (Product == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResultApi(Product));
                 }
 
                 return Ok(new ResultApi(Product));
@@ -82,18 +90,21 @@ namespace SER.Controllers
 
         // PUT: api/Product/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost][Route("[action]")]
-        public async Task<IActionResult> PutProduct(Product Product)
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<IActionResult> Update(ProductUpdateRequest request)
         {
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Product.UpdateEntity(Product);
+                var data = _seedService.Product.UpdateEntity(request);
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -107,17 +118,16 @@ namespace SER.Controllers
         // POST: api/Product
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product Product)
+        [Route("[action]")]
+        public async Task<ActionResult<Product>> Create(ProductCreateRequest request)
         {
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                    return NotFound(new ResultApi());
                 }
-                var data = _seedService.Product.CreateEntity(Product);
-                if (data == null)
-                    return NoContent();
+                var data = _seedService.Product.CreateEntity(request);
                 return Ok(new ResultApi(data));
             }
             catch (Exception ex)
@@ -128,18 +138,22 @@ namespace SER.Controllers
         }
 
         // DELETE: api/Product/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(Guid id)
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> HardDelete(Guid id)
         {
             try
             {
                 if (_seedService.Product == null)
                 {
-                    return Problem("Entity set 'ApplicationDbContext.Product'  is null.");
+                    return NotFound(new ResultApi());
                 }
                 var data = _seedService.Product.DeleteEntity(id);
+
                 if (data == null)
-                    return NoContent();
+                {
+                    return NotFound(new ResultApi(data));
+                }
 
                 return Ok(new ResultApi(data));
             }

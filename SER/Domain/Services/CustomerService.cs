@@ -1,4 +1,6 @@
-﻿using SER.Domain.Entities;
+﻿using AutoMapper;
+using SER.Domain.Entities;
+using SER.ViewModel.Customer.Requests;
 
 namespace SER.Domain.Services;
 
@@ -7,30 +9,33 @@ public interface ICustomerService
     object? GetAll();
     object? GetPaged(int pageIndex, int pageSize);
     object? GetEntity(object id);
-    object? CreateEntity(Customer request);
-    object? UpdateEntity(Customer request);
+    object? CreateEntity(CustomerCreateRequest request);
+    object? UpdateEntity(CustomerUpdateRequest request);
     object? DeleteEntity(object id);
 }
 public class CustomerService : ICustomerService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger _logger;
-    public CustomerService(IUnitOfWork unitOfWork, ILogger logger)
+    private readonly IMapper _mapper;
+    public CustomerService(IUnitOfWork unitOfWork, ILogger logger, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _mapper = mapper;
+
     }
 
-    public object? CreateEntity(Customer request)
+    public object? CreateEntity(CustomerCreateRequest request)
     {
         try
         {
-            //mapper nếu dùng auto mapper
-            //...
-            _unitOfWork.Customer.Insert(request);
+            var entity = _mapper.Map<Customer>(request);
+
+            _unitOfWork.Customer.Insert(entity);
             _unitOfWork.Commit();
 
-            return request;
+            return entity;
         }
         catch (Exception ex)
         {
@@ -78,7 +83,7 @@ public class CustomerService : ICustomerService
     {
         try
         {
-            return _unitOfWork.Customer.GetByID(id); 
+            return _unitOfWork.Customer.GetByID(id);
         }
         catch (Exception ex)
         {
@@ -93,10 +98,20 @@ public class CustomerService : ICustomerService
         {
             //mapper nếu dùng auto mapper
             //...
+            var qCustomer = _unitOfWork.Customer.GetQuery(orderBy: e => e.OrderBy(s => s.Email));
+            var totalRow = qCustomer.Count();
             if (pageIndex > 0 && pageSize > 0)
-                return _unitOfWork.Customer.GetQuery(orderBy: e => e.OrderBy(s => s.Email)).Skip(pageSize* (pageIndex - 1)).Take(pageSize).ToList();
+                return new
+                {
+                    totalRow,
+                    Data = qCustomer.Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList(),
+                };
             else
-                return _unitOfWork.Customer.GetList(orderBy: e => e.OrderBy(s => s.Email)); ;
+                return new
+                {
+                    totalRow,
+                    Data = qCustomer.ToList(),
+                };
         }
         catch (Exception ex)
         {
@@ -105,15 +120,15 @@ public class CustomerService : ICustomerService
         }
     }
 
-    public object? UpdateEntity(Customer request)
+    public object? UpdateEntity(CustomerUpdateRequest request)
     {
         try
         {
             var entity = _unitOfWork.Customer.GetByID(request.Id);
             if (entity == null) return entity;
-            entity.DOB = request.DOB;
-            entity.FullName = request.FullName;
-            entity.Email = request.Email;
+
+            _mapper.Map(request, entity);
+
             _unitOfWork.Customer.Update(entity);
             _unitOfWork.Commit();
 

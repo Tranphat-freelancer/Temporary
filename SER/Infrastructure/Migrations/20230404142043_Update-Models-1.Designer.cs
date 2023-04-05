@@ -9,7 +9,7 @@ using SER.DataAccess;
 
 #nullable disable
 
-namespace SER.Migrations
+namespace SER.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230404142043_Update-Models-1")]

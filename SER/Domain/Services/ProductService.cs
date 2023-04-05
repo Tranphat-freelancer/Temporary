@@ -1,4 +1,6 @@
-﻿using SER.Domain.Entities;
+﻿using AutoMapper;
+using SER.Domain.Entities;
+using SER.ViewModel.Product.Requests;
 
 namespace SER.Domain.Services;
 
@@ -7,30 +9,32 @@ public interface IProductService
     object? GetAll();
     object? GetPaged(int pageIndex, int pageSize);
     object? GetEntity(object id);
-    object? CreateEntity(Product request);
-    object? UpdateEntity(Product request);
+    object? CreateEntity(ProductCreateRequest request);
+    object? UpdateEntity(ProductUpdateRequest request);
     object? DeleteEntity(object id);
 }
 public class ProductService : IProductService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger _logger;
-    public ProductService(IUnitOfWork unitOfWork, ILogger logger)
+    private readonly IMapper _mapper;
+    public ProductService(IUnitOfWork unitOfWork, ILogger logger, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _mapper = mapper;
     }
 
-    public object? CreateEntity(Product request)
+    public object? CreateEntity(ProductCreateRequest request)
     {
         try
         {
-            //mapper nếu dùng auto mapper
-            //...
-            _unitOfWork.Product.Insert(request);
+            var entity = _mapper.Map<Product>(request);
+
+            _unitOfWork.Product.Insert(entity);
             _unitOfWork.Commit();
 
-            return request;
+            return entity;
         }
         catch (Exception ex)
         {
@@ -91,12 +95,20 @@ public class ProductService : IProductService
     {
         try
         {
-            //mapper nếu dùng auto mapper
-            //...
+            var qProduct = _unitOfWork.Product.GetQuery(orderBy: e => e.OrderByDescending(s => s.Price));
+            var totalRow = qProduct.Count();
             if (pageIndex > 0 && pageSize > 0)
-                return _unitOfWork.Product.GetQuery(orderBy: e => e.OrderByDescending(s => s.Price)).Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList();
+                return new
+                {
+                    totalRow,
+                    Data = qProduct.Skip(pageSize * (pageIndex - 1)).Take(pageSize).ToList(),
+                };
             else
-                return _unitOfWork.Product.GetList(orderBy: e => e.OrderByDescending(s => s.Price)); ;
+                return new
+                {
+                    totalRow,
+                    Data = qProduct.ToList(),
+                };
         }
         catch (Exception ex)
         {
@@ -105,14 +117,15 @@ public class ProductService : IProductService
         }
     }
 
-    public object? UpdateEntity(Product request)
+    public object? UpdateEntity(ProductUpdateRequest request)
     {
         try
         {
             var entity = _unitOfWork.Product.GetByID(request.Id);
             if (entity == null) return entity;
-            entity.Price = request.Price;
-            entity.Name = request.Name;
+
+            _mapper.Map(request, entity);
+
             _unitOfWork.Product.Update(entity);
             _unitOfWork.Commit();
 

@@ -21,7 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var config = new MapperConfiguration(cfg =>
 {
     cfg.AllowNullCollections = true;
-    cfg.AddProfile(new FinalMappingProfile());
+    cfg.AddProfile(new MappingProfile());
     //cfg.AddProfile<MappingProfile>();
 });
 
